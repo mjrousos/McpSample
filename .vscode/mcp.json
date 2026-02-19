@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "Scryfall-MCP": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "src/ScryfallMCP/ScryfallMCP.csproj"
+      ]
+    }
+  }
+}

@@ -59,10 +59,10 @@ dotnet test
 dotnet test --filter "FullyQualifiedName~ClassName.MethodName"
 
 # Run the server (stdio mode is default)
-dotnet run --project src/<ServerProject>
+dotnet run --project src/ScryfallMCP
 
 # Run the server in HTTP mode
-dotnet run --project src/<ServerProject> -- --transport http
+dotnet run --project src/ScryfallMCP -- --transport http
 ```
 
 ## MCP Best Practices (per Microsoft/.NET guidelines)
@@ -116,7 +116,7 @@ dotnet run --project src/<ServerProject> -- --transport http
 
 ```
 src/
-  <ServerProject>/       # MCP server host + tool definitions
+  ScryfallMCP/           # MCP server host + tool definitions
 tests/
-  <TestProject>/         # Unit/integration tests
+  ScryfallMCP.Tests/     # Unit and integration tests
 ```

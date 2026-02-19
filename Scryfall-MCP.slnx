@@ -1,2 +1,8 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ScryfallMCP/ScryfallMCP.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ScryfallMCP.Tests/ScryfallMCP.Tests.csproj" />
+  </Folder>
 </Solution>
