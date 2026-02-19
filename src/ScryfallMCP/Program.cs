@@ -34,8 +34,8 @@ static async Task RunStdioAsync(string[] args)
         .WithToolsFromAssembly();
 
     var app = builder.Build();
-    var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("ScryfallMCP");
-    logger.LogInformation("Scryfall MCP server started in stdio mode. Connect by configuring your MCP client to launch this process.");
+    var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("EchoMCP");
+    logger.LogInformation("Echo MCP server started in stdio mode. Connect by configuring your MCP client to launch this process.");
     await app.RunAsync();
 }
 
@@ -63,9 +63,9 @@ static async Task RunHttpAsync(string[] args)
 
     app.Lifetime.ApplicationStarted.Register(() =>
     {
-        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("ScryfallMCP");
+        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("EchoMCP");
         var addresses = string.Join(", ", app.Urls.Select(u => $"{u}/mcp"));
-        logger.LogInformation("Scryfall MCP server started in HTTP mode. Connect your MCP client to: {Addresses}", addresses);
+        logger.LogInformation("Echo MCP server started in HTTP mode. Connect your MCP client to: {Addresses}", addresses);
     });
 
     await app.RunAsync();
