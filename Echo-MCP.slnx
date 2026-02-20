@@ -1,8 +1,8 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/ScryfallMCP/ScryfallMCP.csproj" />
+    <Project Path="src/DotNetMcpSample/DotNetMcpSample.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/ScryfallMCP.Tests/ScryfallMCP.Tests.csproj" />
+    <Project Path="tests/DotNetMcpSample.Tests/DotNetMcpSample.Tests.csproj" />
   </Folder>
 </Solution>

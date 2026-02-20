@@ -2,7 +2,7 @@ using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using Xunit;
 
-namespace ScryfallMCP.Tests.Integration;
+namespace DotNetMcpSample.Tests.Integration;
 
 public class HttpTransportTests : IAsyncLifetime
 {
@@ -34,7 +34,7 @@ public class HttpTransportTests : IAsyncLifetime
         listener.Stop();
 
         var projectPath = Path.GetFullPath(
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "ScryfallMCP", "ScryfallMCP.csproj"));
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "DotNetMcpSample", "DotNetMcpSample.csproj"));
 
         var url = $"http://localhost:{port}";
         _serverProcess = new System.Diagnostics.Process

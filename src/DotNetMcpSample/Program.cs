@@ -31,7 +31,9 @@ static async Task RunStdioAsync(string[] args)
             };
         })
         .WithStdioServerTransport()
-        .WithToolsFromAssembly();
+        .WithToolsFromAssembly()
+        .WithPromptsFromAssembly()
+        .WithResourcesFromAssembly();
 
     var app = builder.Build();
     var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("EchoMCP");
@@ -56,7 +58,9 @@ static async Task RunHttpAsync(string[] args)
             };
         })
         .WithHttpTransport()
-        .WithToolsFromAssembly();
+        .WithToolsFromAssembly()
+        .WithPromptsFromAssembly()
+        .WithResourcesFromAssembly();
 
     var app = builder.Build();
     app.MapMcp("/mcp");

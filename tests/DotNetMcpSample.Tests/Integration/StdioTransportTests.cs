@@ -2,7 +2,7 @@ using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using Xunit;
 
-namespace ScryfallMCP.Tests.Integration;
+namespace DotNetMcpSample.Tests.Integration;
 
 public class StdioTransportTests : IAsyncLifetime
 {
@@ -21,7 +21,7 @@ public class StdioTransportTests : IAsyncLifetime
     private async Task<McpClient> CreateClientAsync()
     {
         var projectPath = Path.GetFullPath(
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "ScryfallMCP", "ScryfallMCP.csproj"));
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "DotNetMcpSample", "DotNetMcpSample.csproj"));
 
         var transport = new StdioClientTransport(new StdioClientTransportOptions
         {

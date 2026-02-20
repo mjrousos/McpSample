@@ -24,7 +24,7 @@ This project uses the official [C# MCP SDK](https://github.com/modelcontextproto
 | [`ModelContextProtocol`](https://www.nuget.org/packages/ModelContextProtocol) | Core SDK — server/client abstractions, tool attributes, DI extensions, stdio transport. |
 | [`ModelContextProtocol.AspNetCore`](https://www.nuget.org/packages/ModelContextProtocol.AspNetCore) | ASP.NET Core integration — HTTP transport via `WithHttpTransport()` and `MapMcp()`. |
 
-These are referenced in the server project's [ScryfallMCP.csproj](../src/ScryfallMCP/ScryfallMCP.csproj):
+These are referenced in the server project's [DotNetMcpSample.csproj](../src/DotNetMcpSample/DotNetMcpSample.csproj):
 
 ```xml
 <PackageReference Include="ModelContextProtocol" Version="*-*" />
@@ -39,13 +39,13 @@ Tools are the primary way an MCP server exposes functionality. The SDK uses an *
 
 ### Tool Class and Method Attributes
 
-Look at [`src/ScryfallMCP/Tools/EchoTool.cs`](../src/ScryfallMCP/Tools/EchoTool.cs):
+Look at [`src/DotNetMcpSample/Tools/EchoTool.cs`](../src/DotNetMcpSample/Tools/EchoTool.cs):
 
 ```csharp
 using ModelContextProtocol.Server;
 using System.ComponentModel;
 
-namespace ScryfallMCP.Tools;
+namespace DotNetMcpSample.Tools;
 
 [McpServerToolType]
 public static class EchoTool
@@ -82,7 +82,7 @@ No manual tool registration is needed — just add the attributes and the SDK ha
 
 ## Server Startup and Transport Configuration
 
-The server's entry point is [`src/ScryfallMCP/Program.cs`](../src/ScryfallMCP/Program.cs). It supports two transports, selectable via a `--transport` command-line argument.
+The server's entry point is [`src/DotNetMcpSample/Program.cs`](../src/DotNetMcpSample/Program.cs). It supports two transports, selectable via a `--transport` command-line argument.
 
 ### Stdio Transport
 
@@ -166,10 +166,10 @@ Key points:
 
 ```bash
 # Stdio mode (default) — used by most local MCP clients
-dotnet run --project src/ScryfallMCP
+dotnet run --project src/DotNetMcpSample
 
 # HTTP mode — for remote or browser-based clients
-dotnet run --project src/ScryfallMCP -- --transport http
+dotnet run --project src/DotNetMcpSample -- --transport http
 ```
 
 ## Configuring a Client to Connect
@@ -184,7 +184,7 @@ Add the server to your VS Code MCP settings (`.vscode/mcp.json` or user settings
     "echo-mcp": {
       "type": "stdio",
       "command": "dotnet",
-      "args": ["run", "--project", "path/to/src/ScryfallMCP"]
+      "args": ["run", "--project", "path/to/src/DotNetMcpSample"]
     }
   }
 }
@@ -199,7 +199,7 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "echo-mcp": {
       "command": "dotnet",
-      "args": ["run", "--project", "path/to/src/ScryfallMCP"]
+      "args": ["run", "--project", "path/to/src/DotNetMcpSample"]
     }
   }
 }
@@ -224,7 +224,7 @@ public void Echo_ReturnsFormattedMessage()
 
 ### Integration Tests
 
-The integration tests start the actual MCP server and connect to it using the SDK's client classes. See [`tests/ScryfallMCP.Tests/Integration/`](../tests/ScryfallMCP.Tests/Integration/) for examples using both transports:
+The integration tests start the actual MCP server and connect to it using the SDK's client classes. See [`tests/DotNetMcpSample.Tests/Integration/`](../tests/DotNetMcpSample.Tests/Integration/) for examples using both transports:
 
 - **`StdioTransportTests`** — Creates a `StdioClientTransport` that launches the server as a subprocess.
 - **`HttpTransportTests`** — Starts the server in HTTP mode and connects with an `HttpClientTransport`.
@@ -246,13 +246,13 @@ dotnet test --filter "FullyQualifiedName~Integration"
 
 To add a new tool to this server:
 
-1. **Create a tool class** in `src/ScryfallMCP/Tools/`:
+1. **Create a tool class** in `src/DotNetMcpSample/Tools/`:
 
     ```csharp
     using ModelContextProtocol.Server;
     using System.ComponentModel;
 
-    namespace ScryfallMCP.Tools;
+    namespace DotNetMcpSample.Tools;
 
     [McpServerToolType]
     public static class MyTool
@@ -267,7 +267,7 @@ To add a new tool to this server:
 
 2. **That's it for registration** — `WithToolsFromAssembly()` picks it up automatically.
 
-3. **Add unit tests** in `tests/ScryfallMCP.Tests/Tools/`.
+3. **Add unit tests** in `tests/DotNetMcpSample.Tests/Tools/`.
 
 4. **Rebuild and reconnect** your MCP client to see the new tool.
 

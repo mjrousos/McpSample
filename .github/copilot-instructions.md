@@ -1,8 +1,8 @@
-# Copilot Instructions for Scryfall-MCP
+# Copilot Instructions for DotNetMcpSample
 
 ## Project Overview
 
-This is a .NET MCP (Model Context Protocol) server that wraps the [Scryfall REST API](https://scryfall.com/docs/api) to expose Magic: The Gathering card data as MCP tools. It allows AI assistants to search for cards, retrieve card details, rulings, sets, and other MTG data through the Model Context Protocol.
+This is a .NET 10 reference implementation of an MCP (Model Context Protocol) server using the official [C# MCP SDK](https://github.com/modelcontextprotocol/csharp-sdk). It demonstrates key MCP patterns — tools, resources, prompts, structured output, dependency injection, and dual transport (stdio + HTTP). It serves as a practical starting point for building production MCP servers.
 
 ## Target Framework & Language
 
@@ -16,16 +16,14 @@ This is a .NET MCP (Model Context Protocol) server that wraps the [Scryfall REST
 
 | Package | Purpose |
 |---------|---------|
-| `ModelContextProtocol` | Core SDK — tool attributes (`[McpServerToolType]`, `[McpServerTool]`), DI extensions (`AddMcpServer`), stdio transport (`WithStdioServerTransport`), and protocol types. Required by all projects. |
+| `ModelContextProtocol` | Core SDK — tool/resource/prompt attributes, DI extensions (`AddMcpServer`), stdio transport (`WithStdioServerTransport`), and protocol types. Required by all projects. |
 | `ModelContextProtocol.AspNetCore` | HTTP transport support — `WithHttpTransport()` and `MapMcp()` endpoint mapping for ASP.NET Core. Required only by the server project for HTTP mode. |
-| `ModelContextProtocol.Core` | Minimal-dependency package with low-level client/server primitives. Typically not referenced directly — pulled in transitively by the above packages. |
 
 ### .NET / Microsoft Extensions
 
 | Package | Purpose |
 |---------|---------|
 | `Microsoft.Extensions.Hosting` | Generic host (`Host.CreateApplicationBuilder`) for the stdio transport path. Provides DI, configuration, and logging infrastructure. |
-| `Microsoft.Extensions.Http` | `IHttpClientFactory` registration (`AddHttpClient`) for making Scryfall API calls with proper lifetime management and `User-Agent` headers. |
 | `Microsoft.Extensions.Logging.Console` | Console logging provider configured to write to stderr. |
 
 ### Testing
@@ -33,18 +31,21 @@ This is a .NET MCP (Model Context Protocol) server that wraps the [Scryfall REST
 | Package | Purpose |
 |---------|---------|
 | `Microsoft.NET.Test.Sdk` | Test host infrastructure for running tests via `dotnet test`. |
-| `xunit` / `xunit.runner.visualstudio` | Test framework and runner (or substitute `MSTest` / `NUnit` if preferred). |
-| `Moq` | Mocking `HttpMessageHandler` / `IHttpClientFactory` for unit testing tool classes without hitting Scryfall. |
+| `xunit` / `xunit.runner.visualstudio` | Test framework and runner. |
+| `Moq` | Mocking dependencies (e.g., `ILogger<T>`) for unit testing tool classes. |
 
 ## Architecture
 
 - **Solution format**: `.slnx` (new XML-based Visual Studio solution format)
 - **MCP SDK**: Uses the official [C# MCP SDK](https://github.com/modelcontextprotocol/csharp-sdk) (see NuGet packages above)
-- **Dual transport**: The server supports both **stdio** and **HTTP (Streamable HTTP)** transports, selectable at startup
+- **Dual transport**: The server supports both **stdio** and **HTTP (Streamable HTTP)** transports, selectable at startup via `--transport stdio|http`
   - **Stdio**: Uses `WithStdioServerTransport()` via `Host.CreateApplicationBuilder` — for local use as a subprocess (e.g., VS Code Copilot, Claude Desktop)
   - **HTTP**: Uses `WithHttpTransport()` via `WebApplication.CreateBuilder` with `MapMcp()` endpoint — for remote/production deployments
-- **Tool discovery**: Attribute-based using `[McpServerToolType]` on tool classes and `[McpServerTool]` on tool methods, auto-registered via `WithToolsFromAssembly()`
-- **DI**: Uses `Microsoft.Extensions.Hosting` and standard .NET dependency injection for `HttpClient`, logging, and services
+- **Capability discovery**: Attribute-based using assembly scanning:
+  - Tools: `[McpServerToolType]` + `[McpServerTool]`, registered via `WithToolsFromAssembly()`
+  - Resources: `[McpServerResourceType]` + `[McpServerResource]`, registered via `WithResourcesFromAssembly()`
+  - Prompts: `[McpServerPromptType]` + `[McpServerPrompt]`, registered via `WithPromptsFromAssembly()`
+- **DI**: Uses `Microsoft.Extensions.Hosting` and standard .NET dependency injection for logging, services, and non-static tool classes
 
 ## Build & Test
 
@@ -59,10 +60,10 @@ dotnet test
 dotnet test --filter "FullyQualifiedName~ClassName.MethodName"
 
 # Run the server (stdio mode is default)
-dotnet run --project src/ScryfallMCP
+dotnet run --project src/DotNetMcpSample
 
 # Run the server in HTTP mode
-dotnet run --project src/ScryfallMCP -- --transport http
+dotnet run --project src/DotNetMcpSample -- --transport http
 ```
 
 ## MCP Best Practices (per Microsoft/.NET guidelines)
@@ -70,7 +71,7 @@ dotnet run --project src/ScryfallMCP -- --transport http
 ### Testing Requirements
 
 - All new features must include unit tests validating their functionality
-- Test tool classes by mocking `HttpMessageHandler` with Moq to avoid real Scryfall API calls
+- Test tool classes by mocking dependencies (e.g., `ILogger<T>`) with Moq
 - Place tests in a corresponding test project under `tests/`
 
 ### Tool Design
@@ -82,6 +83,24 @@ dotnet run --project src/ScryfallMCP -- --transport http
 - Throw `McpException` for user-facing errors from tools
 - Keep tools modular and focused — don't create monolithic "mega-tools" that do too many things
 - Mark read-only tools with `ReadOnly = true` and idempotent tools with `Idempotent = true` on the `[McpServerTool]` attribute
+- For rich output, use `[McpServerTool(UseStructuredContent = true)]` and return `CallToolResult` with multiple content blocks
+
+### Resource Design
+
+- Use `[McpServerResourceType]` on classes and `[McpServerResource]` on methods
+- Static resources use fixed URIs (e.g., `config://app/info`)
+- Dynamic resources use URI templates with parameters (e.g., `sample://greeting/{name}`)
+
+### Prompt Design
+
+- Use `[McpServerPromptType]` on classes and `[McpServerPrompt]` on methods
+- Simple prompts return `string`; multi-turn prompts return `IEnumerable<ChatMessage>` (from `Microsoft.Extensions.AI`)
+- Use `[Description]` on prompt parameters for documentation
+
+### Dependency Injection in Tools
+
+- Non-static tool classes can accept services via primary constructors
+- The MCP SDK resolves tools through DI, enabling `ILogger<T>`, `IHttpClientFactory`, etc.
 
 ### Security & Input Validation
 
@@ -104,19 +123,21 @@ dotnet run --project src/ScryfallMCP -- --transport http
 - MCP servers can be distributed as NuGet tool packages with a `server.json` manifest for discoverability
 - Include a `server.json` file defining transport type, environment variables, and package arguments
 
-## Scryfall API Integration
-
-- Base URL: `https://api.scryfall.com`
-- No authentication required
-- Scryfall asks that clients send a reasonable `User-Agent` header and limit to ~10 requests/second
-- Use `IHttpClientFactory` (registered via `AddHttpClient`) rather than raw `HttpClient`
-- Key endpoints: `/cards/search`, `/cards/named`, `/cards/{id}`, `/cards/{id}/rulings`, `/sets`, `/catalog/{category}`
-
 ## Project Structure
 
 ```
 src/
-  ScryfallMCP/           # MCP server host + tool definitions
+  DotNetMcpSample/
+    Program.cs                     # Entry point — dual transport selection
+    Tools/                         # MCP tool classes
+    Resources/                     # MCP resource classes
+    Prompts/                       # MCP prompt classes
 tests/
-  ScryfallMCP.Tests/     # Unit and integration tests
+  DotNetMcpSample.Tests/
+    Tools/                         # Unit tests for tools
+    Resources/                     # Unit tests for resources
+    Prompts/                       # Unit tests for prompts
+    Integration/                   # Stdio and HTTP transport integration tests
+docs/
+  mcp-quickstart.md               # Comprehensive MCP walkthrough
 ```

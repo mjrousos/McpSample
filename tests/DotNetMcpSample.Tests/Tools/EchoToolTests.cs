@@ -1,7 +1,7 @@
-using ScryfallMCP.Tools;
+using DotNetMcpSample.Tools;
 using Xunit;
 
-namespace ScryfallMCP.Tests.Tools;
+namespace DotNetMcpSample.Tests.Tools;
 
 public class EchoToolTests
 {

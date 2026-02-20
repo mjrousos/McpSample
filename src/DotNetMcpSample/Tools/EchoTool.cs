@@ -1,7 +1,7 @@
 using ModelContextProtocol.Server;
 using System.ComponentModel;
 
-namespace ScryfallMCP.Tools;
+namespace DotNetMcpSample.Tools;
 
 [McpServerToolType]
 public static class EchoTool
