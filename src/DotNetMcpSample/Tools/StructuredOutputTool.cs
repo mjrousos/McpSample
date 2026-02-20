@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
@@ -6,7 +7,7 @@ namespace DotNetMcpSample.Tools;
 
 /// <summary>
 /// Demonstrates returning structured, multi-part content from an MCP tool
-/// using CallToolResult with multiple content blocks.
+/// using CallToolResult with both text content blocks and a StructuredContent JSON object.
 /// </summary>
 [McpServerToolType]
 public static class StructuredOutputTool
@@ -37,7 +38,13 @@ public static class StructuredOutputTool
                 {
                     Text = $"The text contains {wordCount} word(s) across {lineCount} line(s)."
                 }
-            ]
+            ],
+            StructuredContent = new JsonObject
+            {
+                ["characters"] = charCount,
+                ["words"] = wordCount,
+                ["lines"] = lineCount
+            }
         };
     }
 }

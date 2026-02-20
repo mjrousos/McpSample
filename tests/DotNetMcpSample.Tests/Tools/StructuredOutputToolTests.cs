@@ -15,6 +15,10 @@ public class StructuredOutputToolTests
         var stats = result.Content.OfType<TextContentBlock>().First().Text;
         Assert.Contains("Characters: 11", stats);
         Assert.Contains("Words: 2", stats);
+
+        Assert.NotNull(result.StructuredContent);
+        Assert.Equal(11, (int)result.StructuredContent!["characters"]!);
+        Assert.Equal(2, (int)result.StructuredContent["words"]!);
     }
 
     [Fact]
