@@ -25,7 +25,7 @@ public class StdioTransportTests : IAsyncLifetime
 
         var transport = new StdioClientTransport(new StdioClientTransportOptions
         {
-            Name = "Echo-MCP-Test",
+            Name = "DotNetMcpSample-Test",
             Command = "dotnet",
             Arguments = ["run", "--project", projectPath, "--no-build", "--", "--transport", "stdio"]
         });

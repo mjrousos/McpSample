@@ -1,6 +1,6 @@
 {
   "servers": {
-    "echo-mcp": {
+    "dotnet-mcp-sample": {
       "type": "stdio",
       "command": "dotnet",
       "args": [

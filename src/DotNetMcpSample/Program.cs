@@ -24,9 +24,9 @@ static async Task RunStdioAsync(string[] args)
         {
             options.ServerInfo = new()
             {
-                Name = "Echo-MCP",
-                Title = "Echo MCP Server",
-                Description = "A simple MCP server that echoes back received messages. Can be used for testing that MCP clients are working correctly.",
+                Name = "DotNetMcpSample",
+                Title = "DotNet MCP Sample Server",
+                Description = "A .NET MCP reference server demonstrating tools, resources, prompts, structured output, DI, and dual transport.",
                 Version = GetVersion()
             };
         })
@@ -36,8 +36,8 @@ static async Task RunStdioAsync(string[] args)
         .WithResourcesFromAssembly();
 
     var app = builder.Build();
-    var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("EchoMCP");
-    logger.LogInformation("Echo MCP server started in stdio mode. Connect by configuring your MCP client to launch this process.");
+    var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("DotNetMcpSample");
+    logger.LogInformation("DotNetMcpSample server started in stdio mode. Connect by configuring your MCP client to launch this process.");
     await app.RunAsync();
 }
 
@@ -51,9 +51,9 @@ static async Task RunHttpAsync(string[] args)
         {
             options.ServerInfo = new()
             {
-                Name = "Echo-MCP",
-                Title = "Echo MCP Server",
-                Description = "A simple MCP server that echoes back received messages. Can be used for testing that MCP clients are working correctly.",
+                Name = "DotNetMcpSample",
+                Title = "DotNet MCP Sample Server",
+                Description = "A .NET MCP reference server demonstrating tools, resources, prompts, structured output, DI, and dual transport.",
                 Version = GetVersion()
             };
         })
@@ -67,9 +67,9 @@ static async Task RunHttpAsync(string[] args)
 
     app.Lifetime.ApplicationStarted.Register(() =>
     {
-        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("EchoMCP");
+        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("DotNetMcpSample");
         var addresses = string.Join(", ", app.Urls.Select(u => $"{u}/mcp"));
-        logger.LogInformation("Echo MCP server started in HTTP mode. Connect your MCP client to: {Addresses}", addresses);
+        logger.LogInformation("DotNetMcpSample server started in HTTP mode. Connect your MCP client to: {Addresses}", addresses);
     });
 
     await app.RunAsync();

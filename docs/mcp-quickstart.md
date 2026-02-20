@@ -100,9 +100,9 @@ static async Task RunStdioAsync(string[] args)
         {
             options.ServerInfo = new()
             {
-                Name = "Echo-MCP",
-                Title = "Echo MCP Server",
-                Description = "A simple MCP server that echoes back received messages.",
+                Name = "DotNetMcpSample",
+                Title = "DotNet MCP Sample Server",
+                Description = "A .NET MCP reference server demonstrating tools, resources, prompts, and more.",
                 Version = GetVersion()
             };
         })
@@ -134,9 +134,9 @@ static async Task RunHttpAsync(string[] args)
         {
             options.ServerInfo = new()
             {
-                Name = "Echo-MCP",
-                Title = "Echo MCP Server",
-                Description = "A simple MCP server that echoes back received messages.",
+                Name = "DotNetMcpSample",
+                Title = "DotNet MCP Sample Server",
+                Description = "A .NET MCP reference server demonstrating tools, resources, prompts, and more.",
                 Version = GetVersion()
             };
         })
@@ -181,8 +181,7 @@ Add the server to your VS Code MCP settings (`.vscode/mcp.json` or user settings
 ```json
 {
   "servers": {
-    "echo-mcp": {
-      "type": "stdio",
+    "dotnet-mcp-sample": {
       "command": "dotnet",
       "args": ["run", "--project", "path/to/src/DotNetMcpSample"]
     }
@@ -197,7 +196,7 @@ Add to `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "echo-mcp": {
+    "dotnet-mcp-sample": {
       "command": "dotnet",
       "args": ["run", "--project", "path/to/src/DotNetMcpSample"]
     }
