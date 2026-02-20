@@ -1,6 +1,6 @@
 {
   "servers": {
-    "Scryfall-MCP": {
+    "echo-mcp": {
       "type": "stdio",
       "command": "dotnet",
       "args": [
