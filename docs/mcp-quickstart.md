@@ -107,7 +107,9 @@ static async Task RunStdioAsync(string[] args)
             };
         })
         .WithStdioServerTransport()
-        .WithToolsFromAssembly();
+        .WithToolsFromAssembly()
+        .WithPromptsFromAssembly()
+        .WithResourcesFromAssembly();
 
     await builder.Build().RunAsync();
 }
@@ -119,6 +121,7 @@ Key points:
 - **`AddMcpServer`** — Registers the MCP server in the DI container and configures server metadata (name, description, version). This metadata is sent to clients during the `initialize` handshake.
 - **`WithStdioServerTransport()`** — Configures the server to communicate over standard input/output. The client launches this server as a subprocess and exchanges JSON-RPC messages via stdin/stdout.
 - **`WithToolsFromAssembly()`** — Scans the current assembly for `[McpServerToolType]` classes and registers all `[McpServerTool]` methods.
+- **`WithPromptsFromAssembly()`** / **`WithResourcesFromAssembly()`** — Similarly scans for `[McpServerPromptType]` and `[McpServerResourceType]` classes to register prompts and resources.
 - **Logging to stderr** — Critical for stdio mode! Stdout is reserved for MCP protocol messages, so all logging must go to stderr. The `LogToStandardErrorThreshold = LogLevel.Trace` setting redirects console logging accordingly.
 
 ### HTTP Transport (Streamable HTTP)
@@ -141,7 +144,9 @@ static async Task RunHttpAsync(string[] args)
             };
         })
         .WithHttpTransport()
-        .WithToolsFromAssembly();
+        .WithToolsFromAssembly()
+        .WithPromptsFromAssembly()
+        .WithResourcesFromAssembly();
 
     var app = builder.Build();
     app.MapMcp("/mcp");
@@ -270,6 +275,10 @@ To add a new tool to this server:
 
 4. **Rebuild and reconnect** your MCP client to see the new tool.
 
+> **Other tool patterns:** The example above shows the simplest pattern — a static method returning a string. This project also demonstrates:
+> - **Structured output** — return a POCO with `UseStructuredContent = true` to get typed JSON results. See the [Structured Output](#structured-output) section.
+> - **Dependency injection** — use a non-static class with a primary constructor to inject services like `ILogger<T>`. See the [Dependency Injection in Tools](#dependency-injection-in-tools) section.
+
 ### Tips for Tool Design
 
 - **Write clear descriptions** — The AI reads `[Description]` attributes to decide when and how to use your tool. Be specific.
@@ -383,13 +392,64 @@ Any service registered in the DI container (`ILogger<T>`, `IHttpClientFactory`, 
 
 ## Resources and Prompts
 
-Beyond tools, MCP servers can also expose **resources** (read-only data) and **prompts** (reusable prompt templates). This project demonstrates both — see the [README](../README.md) patterns table for a quick overview, or browse the source:
+Beyond tools, MCP servers can also expose **resources** (read-only data) and **prompts** (reusable prompt templates). These work similarly to tools — use attribute-based discovery and assembly scanning.
 
-- [`src/DotNetMcpSample/Resources/SampleResources.cs`](../src/DotNetMcpSample/Resources/SampleResources.cs) — Static and templated URI resources
-- [`src/DotNetMcpSample/Prompts/SamplePrompts.cs`](../src/DotNetMcpSample/Prompts/SamplePrompts.cs) — Simple, parameterized, and multi-turn prompts
+### Adding a Resource
+
+Create a class with `[McpServerResourceType]` and methods with `[McpServerResource]`. Resources expose data via URI patterns:
+
+```csharp
+[McpServerResourceType]
+public class SampleResources
+{
+    // Static resource — fixed URI
+    [McpServerResource(UriTemplate = "config://app/info", Name = "Application Info",
+                       MimeType = "application/json")]
+    [Description("Returns server metadata as JSON")]
+    public string GetAppInfo() => JsonSerializer.Serialize(new { name = "MyServer", version = "1.0" });
+
+    // Templated resource — URI with parameters
+    [McpServerResource(UriTemplate = "sample://greeting/{name}", Name = "Personalized Greeting")]
+    [Description("Returns a personalized greeting for the given name")]
+    public string GetGreeting([Description("Name of the person")] string name) =>
+        $"Hello, {name}!";
+}
+```
+
+Registration is automatic via `WithResourcesFromAssembly()` in `Program.cs`. See [`src/DotNetMcpSample/Resources/SampleResources.cs`](../src/DotNetMcpSample/Resources/SampleResources.cs) for the full example.
+
+### Adding a Prompt
+
+Create a class with `[McpServerPromptType]` and methods with `[McpServerPrompt]`. Prompts can return a simple string, or `IEnumerable<ChatMessage>` for multi-turn conversations:
+
+```csharp
+[McpServerPromptType]
+public static class SamplePrompts
+{
+    // Simple prompt — returns a string
+    [McpServerPrompt(Name = "summarize")]
+    [Description("A prompt that asks the AI to summarize content")]
+    public static string Summarize() =>
+        "Please provide a concise summary of the following content:";
+
+    // Multi-turn prompt — returns a conversation with system and user messages
+    [McpServerPrompt(Name = "conversation_starter")]
+    [Description("Starts a conversation about a topic")]
+    public static IEnumerable<ChatMessage> ConversationStarter(
+        [Description("The topic to discuss")] string topic) =>
+    [
+        new(ChatRole.System, "You are a knowledgeable assistant."),
+        new(ChatRole.User, $"I'd like to learn about {topic}. Can you give me a brief overview?")
+    ];
+}
+```
+
+Registration is automatic via `WithPromptsFromAssembly()`. See [`src/DotNetMcpSample/Prompts/SamplePrompts.cs`](../src/DotNetMcpSample/Prompts/SamplePrompts.cs) for the full example.
 
 ## Further Reading
 
 - [Model Context Protocol Specification](https://modelcontextprotocol.io/)
 - [C# MCP SDK on GitHub](https://github.com/modelcontextprotocol/csharp-sdk)
+- [Build an MCP Server in .NET — Microsoft Learn](https://learn.microsoft.com/dotnet/ai/quickstarts/build-mcp-server)
+- [Get Started with MCP in .NET — Microsoft Learn](https://learn.microsoft.com/dotnet/ai/get-started-mcp)
 - [Build a Remote MCP Server in C# — .NET Blog](https://devblogs.microsoft.com/dotnet/build-a-remote-mcp-server-with-dotnet/)
