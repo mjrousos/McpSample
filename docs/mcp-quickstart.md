@@ -278,6 +278,116 @@ To add a new tool to this server:
 - **Mark behavioral hints** — Use `ReadOnly = true` for tools that don't modify state, and `Idempotent = true` for tools that are safe to retry.
 - **Validate inputs** — Don't trust that the AI will always send valid data. Throw `McpException` for user-facing errors.
 
+## Structured Output
+
+The MCP protocol supports **structured output** — returning typed JSON data alongside human-readable text. This lets clients that understand the schema parse results programmatically, while clients without schema support still get a usable text fallback.
+
+### How It Works
+
+The C# MCP SDK provides this via the `UseStructuredContent` property on the `[McpServerTool]` attribute. When enabled, the SDK:
+
+1. **Generates an `outputSchema`** from the tool method's return type and advertises it to clients during tool discovery (`tools/list`).
+2. **Serializes the return value as JSON text** into a `TextContentBlock` in the response's `Content` array — this is the backward-compatible fallback.
+3. **Populates the `StructuredContent` field** with the typed JSON object, which schema-aware clients can parse directly.
+
+### Example: TextAnalysisResult
+
+See [`src/DotNetMcpSample/Tools/StructuredOutputTool.cs`](../src/DotNetMcpSample/Tools/StructuredOutputTool.cs):
+
+```csharp
+[McpServerToolType]
+public static class StructuredOutputTool
+{
+    [McpServerTool(Name = "analyze_text", ReadOnly = true, Idempotent = true,
+                   UseStructuredContent = true)]
+    [Description("Analyzes input text and returns structured statistics.")]
+    public static TextAnalysisResult AnalyzeText(
+        [Description("The text to analyze")] string text)
+    {
+        return new TextAnalysisResult
+        {
+            Characters = text.Length,
+            Words = text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length,
+            Lines = text.Split('\n').Length
+        };
+    }
+}
+
+public class TextAnalysisResult
+{
+    [Description("Total number of characters in the input text")]
+    public int Characters { get; set; }
+
+    [Description("Number of whitespace-delimited words")]
+    public int Words { get; set; }
+
+    [Description("Number of lines (newline-delimited)")]
+    public int Lines { get; set; }
+}
+```
+
+### Key Requirement: Return a POCO, Not CallToolResult
+
+The tool method **must return a plain C# object (POCO)** — not `CallToolResult`. This is critical because:
+
+- The SDK generates the `outputSchema` from the method's return type. If you return `CallToolResult`, the schema is generated from `CallToolResult`'s own internal shape (which includes protocol properties like `content`, `structuredContent`, `isError`), producing an invalid schema that clients reject.
+- When the return type is `CallToolResult`, the SDK returns it as-is and **skips all structured content processing** — it won't auto-populate `StructuredContent` or generate the text fallback.
+
+By returning a POCO, you let the SDK handle everything: schema generation, text serialization for backward compatibility, and structured content population.
+
+### What Clients See
+
+When a client calls this tool, the MCP response looks like:
+
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"Characters\":11,\"Words\":2,\"Lines\":1}"
+    }
+  ],
+  "structuredContent": {
+    "Characters": 11,
+    "Words": 2,
+    "Lines": 1
+  }
+}
+```
+
+- **Schema-aware clients** use `structuredContent` for typed, validated access to the data.
+- **Other clients** read the JSON string from the `content` text block — the tool still works, just without schema validation.
+
+## Dependency Injection in Tools
+
+Tool classes don't have to be static. The MCP SDK resolves tool instances through DI, so non-static classes can accept services via primary constructors.
+
+See [`src/DotNetMcpSample/Tools/TimeInfoTool.cs`](../src/DotNetMcpSample/Tools/TimeInfoTool.cs):
+
+```csharp
+[McpServerToolType]
+public class TimeInfoTool(ILogger<TimeInfoTool> logger)
+{
+    [McpServerTool(Name = "get_time", ReadOnly = true)]
+    [Description("Returns the current UTC date and time.")]
+    public string GetCurrentTime()
+    {
+        var now = DateTimeOffset.UtcNow;
+        logger.LogInformation("get_time tool invoked at {Timestamp}", now);
+        return $"Current UTC time: {now:yyyy-MM-dd HH:mm:ss.fff zzz}";
+    }
+}
+```
+
+Any service registered in the DI container (`ILogger<T>`, `IHttpClientFactory`, custom services, etc.) can be injected this way.
+
+## Resources and Prompts
+
+Beyond tools, MCP servers can also expose **resources** (read-only data) and **prompts** (reusable prompt templates). This project demonstrates both — see the [README](../README.md) patterns table for a quick overview, or browse the source:
+
+- [`src/DotNetMcpSample/Resources/SampleResources.cs`](../src/DotNetMcpSample/Resources/SampleResources.cs) — Static and templated URI resources
+- [`src/DotNetMcpSample/Prompts/SamplePrompts.cs`](../src/DotNetMcpSample/Prompts/SamplePrompts.cs) — Simple, parameterized, and multi-turn prompts
+
 ## Further Reading
 
 - [Model Context Protocol Specification](https://modelcontextprotocol.io/)
