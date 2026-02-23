@@ -6,8 +6,8 @@ A .NET 10 reference implementation of a [Model Context Protocol (MCP)](https://m
 
 ```bash
 # Clone and build
-git clone https://github.com/mjrousos/scryfall-mcp.git
-cd scryfall-mcp
+git clone https://github.com/mjrousos/McpSample.git
+cd McpSample
 dotnet build
 
 # Run in stdio mode (default) — used by most local MCP clients

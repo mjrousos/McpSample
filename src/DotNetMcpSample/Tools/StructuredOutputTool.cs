@@ -16,8 +16,8 @@ public static class StructuredOutputTool
     // a JSON schema for the tool's return type. However, not all MCP clients support outputSchema
     // yet, so it is disabled here for maximum compatibility. Uncomment to enable when your
     // client supports it:
-    // [McpServerTool(Name = "analyze_text", ReadOnly = true, Idempotent = true, UseStructuredContent = true)]
-    [McpServerTool(Name = "analyze_text", ReadOnly = true, Idempotent = true)]
+    //[McpServerTool(Name = "analyze_text", ReadOnly = true, Idempotent = true, UseStructuredContent = true)]
+     [McpServerTool(Name = "analyze_text", ReadOnly = true, Idempotent = true)]
     [Description("Analyzes input text and returns structured statistics (character count, word count, line count).")]
     public static CallToolResult AnalyzeText(
         [Description("The text to analyze")] string text)
