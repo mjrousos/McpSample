@@ -1,5 +1,4 @@
 using DotNetMcpSample.Tools;
-using ModelContextProtocol.Protocol;
 using Xunit;
 
 namespace DotNetMcpSample.Tests.Tools;
@@ -11,33 +10,27 @@ public class StructuredOutputToolTests
     {
         var result = StructuredOutputTool.AnalyzeText("hello world");
 
-        Assert.Equal(2, result.Content.Count);
-        var stats = result.Content.OfType<TextContentBlock>().First().Text;
-        Assert.Contains("Characters: 11", stats);
-        Assert.Contains("Words: 2", stats);
-
-        Assert.NotNull(result.StructuredContent);
-        Assert.Equal(11, (int)result.StructuredContent!["characters"]!);
-        Assert.Equal(2, (int)result.StructuredContent["words"]!);
+        Assert.Equal(11, result.Characters);
+        Assert.Equal(2, result.Words);
+        Assert.Equal(1, result.Lines);
     }
 
     [Fact]
     public void AnalyzeText_WithMultipleLines_CountsLines()
     {
         var result = StructuredOutputTool.AnalyzeText("line one\nline two\nline three");
-        var stats = result.Content.OfType<TextContentBlock>().First().Text;
 
-        Assert.Contains("Lines: 3", stats);
-        Assert.Contains("Words: 6", stats);
+        Assert.Equal(3, result.Lines);
+        Assert.Equal(6, result.Words);
     }
 
     [Fact]
     public void AnalyzeText_EmptyString_ReturnsZeroCounts()
     {
         var result = StructuredOutputTool.AnalyzeText("");
-        var stats = result.Content.OfType<TextContentBlock>().First().Text;
 
-        Assert.Contains("Characters: 0", stats);
-        Assert.Contains("Words: 0", stats);
+        Assert.Equal(0, result.Characters);
+        Assert.Equal(0, result.Words);
+        Assert.Equal(1, result.Lines); // Split on empty string yields one segment
     }
 }
